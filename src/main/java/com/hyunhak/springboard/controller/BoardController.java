@@ -4,7 +4,7 @@ import com.hyunhak.springboard.dto.BoardCreateDto;
 import com.hyunhak.springboard.dto.BoardResponseDto;
 import com.hyunhak.springboard.dto.BoardUpdateDto;
 import com.hyunhak.springboard.service.BoardService;
-import java.util.ArrayList;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -34,7 +34,7 @@ public class BoardController {
     @GetMapping("/board")
     public String view(Model model) {
 
-        ArrayList<BoardResponseDto> boardsList = boardService.findAll();
+        List<BoardResponseDto> boardsList = boardService.findAll();
 
         model.addAttribute("boards", boardsList);
 

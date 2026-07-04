@@ -1,11 +1,13 @@
 package com.hyunhak.springboard.service;
 
-import com.hyunhak.springboard.domain.Board;
 import com.hyunhak.springboard.dto.BoardCreateDto;
 import com.hyunhak.springboard.dto.BoardResponseDto;
 import com.hyunhak.springboard.dto.BoardUpdateDto;
+import com.hyunhak.springboard.entity.BoardEntity;
 import com.hyunhak.springboard.repository.BoardRepository;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,12 +22,12 @@ public class BoardService {
     }
 
     // 게시글 저장
-    public Board save(BoardCreateDto dto) {
+    public BoardEntity save(BoardCreateDto dto) {
 
-        // DTO를 Board 객체로 변환
-        Board board = new Board();
+        // DTO를 BoardEntity 객체로 변환
+        BoardEntity board = new BoardEntity();
 
-        // DTO의 데이터를 Board에 복사
+        // DTO의 데이터를 BoardEntity에 복사
         board.setTitle(dto.getTitle());
         board.setContent(dto.getContent());
         board.setWriter(dto.getWriter());
@@ -35,16 +37,16 @@ public class BoardService {
     }
 
     // 전체 게시글 조회
-    public ArrayList<BoardResponseDto> findAll() {
+    public List<BoardResponseDto> findAll() {
 
-        // Repository에서 게시글 목록 조회
-        ArrayList<Board> boards = boardRepository.findAll();
+        // Repository에서 전체 게시글(Entity) 조회
+        List<BoardEntity> boards = boardRepository.findAll();
 
         // 화면에 전달할 DTO 목록
-        ArrayList<BoardResponseDto> responseDtos = new ArrayList<>();
+        List<BoardResponseDto> responseDtos = new ArrayList<>();
 
-        // Board -> BoardResponseDto 변환
-        for (Board board : boards) {
+        // BoardEntity -> BoardResponseDto 변환
+        for (BoardEntity board : boards) {
             BoardResponseDto dto = new BoardResponseDto();
 
             dto.setId(board.getId());
@@ -55,6 +57,7 @@ public class BoardService {
             responseDtos.add(dto);
         }
 
+        // DTO 목록 반환
         return responseDtos;
     }
 
@@ -62,41 +65,43 @@ public class BoardService {
     public BoardResponseDto findById(Long id) {
 
         // Repository에서 게시글 조회
-        Board board = boardRepository.findById(id);
+        Optional<BoardEntity> board = boardRepository.findById(id);
 
-        // Board -> BoardResponseDto 변환
+        // Optional에서 BoardEntity 꺼내기
+        BoardEntity entity = board.orElseThrow(() -> new RuntimeException("게시글 없음"));
+
+        // BoardEntity -> BoardResponseDto 변환
         BoardResponseDto dto = new BoardResponseDto();
 
-        dto.setId(board.getId());
-        dto.setTitle(board.getTitle());
-        dto.setContent(board.getContent());
-        dto.setWriter(board.getWriter());
+        dto.setId(entity.getId());
+        dto.setTitle(entity.getTitle());
+        dto.setContent(entity.getContent());
+        dto.setWriter(entity.getWriter());
 
         return dto;
     }
 
     // 게시글 수정
-    public Board update(Long id, BoardUpdateDto dto) {
+    public BoardEntity update(Long id, BoardUpdateDto dto) {
 
-        // DTO -> Board 변환
-        Board board = new Board();
+        // id로 기존 게시글 조회 (없으면 예외 발생)
+        Optional<BoardEntity> board = boardRepository.findById(id);
 
-        board.setTitle(dto.getTitle());
-        board.setWriter(dto.getWriter());
-        board.setContent(dto.getContent());
+        // Optional에서 실제 엔티티 꺼내기 (없으면 "게시글 없음" 예외 발생)
+        BoardEntity entity = board.orElseThrow(() -> new RuntimeException("게시글 없음"));
 
-        // Repository에 수정 요청
-        return boardRepository.update(id, board);
+        // DTO 값을 기존 엔티티에 덮어쓰기 (수정)
+        entity.setTitle(dto.getTitle());
+        entity.setWriter(dto.getWriter());
+        entity.setContent(dto.getContent());
+
+        // 변경된 엔티티 저장 (JPA에서는 save가 update 역할도 함)
+        return boardRepository.save(entity);
     }
 
     // 게시글 삭제
     public void delete(Long id) {
-        boardRepository.delete(id);
+        boardRepository.deleteById(id);
     }
-
-
-
-
-
 
 }

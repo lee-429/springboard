@@ -1,22 +1,8 @@
 package com.hyunhak.springboard.repository;
 
-import com.hyunhak.springboard.domain.Board;
-import java.util.ArrayList;
+import com.hyunhak.springboard.entity.BoardEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface BoardRepository {
-
-    // 게시글 저장
-    Board save(Board board);
-
-    // 게시글 전체 조회
-    ArrayList<Board> findAll();
-
-    // 게시글 ID 별 조회
-    Board findById(Long id);
-
-    // 게시글 수정
-    Board update(Long id, Board board);
-
-    // 게시글 삭제
-    void delete(Long id);
-}
+// BoardEntity를 관리하고, 기본 키 타입은 Long
+// save(), findAll(), findById() 등의 메서드를 자동 제공
+public interface BoardRepository extends JpaRepository<BoardEntity, Long> {}
