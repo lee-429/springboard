@@ -14,7 +14,8 @@ import org.springframework.stereotype.Service;
 @Service // 비즈니스 로직 계층이라는 걸 Spring에 알려줌 (Service 역할)
 public class BoardService {
 
-    private BoardRepository boardRepository;
+    // 생성자 주입 후 변경할 수 없도록 final 적용
+    private final BoardRepository boardRepository;
 
     @Autowired // Spring이 자동으로 해당 타입의 객체(Bean)를 찾아서 주입해주는 기능
     public BoardService(BoardRepository boardRepository) {

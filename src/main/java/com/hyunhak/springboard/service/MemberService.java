@@ -1,0 +1,71 @@
+package com.hyunhak.springboard.service;
+
+import com.hyunhak.springboard.dto.LoginDto;
+import com.hyunhak.springboard.dto.MemberCreateDto;
+import com.hyunhak.springboard.entity.MemberEntity;
+import com.hyunhak.springboard.repository.MemberRepository;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service // 비즈니스 로직 계층이라는 걸 Spring에 알려줌 (Service 역할)
+public class MemberService {
+
+    // 생성자 주입 후 변경할 수 없도록 final 적용
+    private final MemberRepository memberRepository;
+
+    @Autowired // Spring이 자동으로 해당 타입의 객체(Bean)를 찾아서 주입해주는 기능
+    public MemberService(MemberRepository memberRepository) {
+        this.memberRepository = memberRepository;
+    }
+
+    // 회원가입
+    public MemberEntity join(MemberCreateDto dto) {
+
+        // 로그인 아이디 중복 확인
+        Optional<MemberEntity> memberIdOpt = memberRepository.findByLoginId(dto.getLoginId());
+
+        // 닉네임 중복 확인
+        Optional<MemberEntity> memberUsernameOpt = memberRepository.findByUsername(dto.getUsername());
+
+        // 이미 존재하는 아이디면 회원가입 실패
+        if (memberIdOpt.isPresent()) {
+            throw new RuntimeException("이미 존재하는 아이디입니다.");
+        }
+
+        // 이미 존재하는 닉네임이면 회원가입 실패
+        if (memberUsernameOpt.isPresent()) {
+            throw new RuntimeException("이미 존재하는 닉네임입니다.");
+        }
+
+        // 회원가입 DTO를 MemberEntity 객체로 변환
+        MemberEntity entity = new MemberEntity();
+
+        // DTO의 회원 정보를 MemberEntity에 저장
+        entity.setLoginId(dto.getLoginId());
+        entity.setPassword(dto.getPassword());
+        entity.setUsername(dto.getUsername());
+
+        // 회원 정보를 DB에 저장
+        return memberRepository.save(entity);
+    }
+
+    // 로그인
+    public MemberEntity login(LoginDto dto) {
+
+        // 입력받은 loginId로 회원 조회
+        Optional<MemberEntity> memberOpt = memberRepository.findByLoginId(dto.getLoginId());
+
+        // 회원이 없으면 예외 발생
+        MemberEntity member = memberOpt.orElseThrow(() -> new RuntimeException("아이디 없음"));
+
+        // 입력한 비밀번호와 DB 비밀번호 비교
+        if (member.getPassword().equals(dto.getPassword())) {
+            // 로그인 성공 시 회원 정보 반환
+            return member;
+        }
+
+        // 비밀번호 불일치
+        throw new RuntimeException("비밀번호가 일치하지 않습니다.");
+    }
+}

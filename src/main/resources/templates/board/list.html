@@ -52,10 +52,20 @@
 
 <h1>게시판 목록</h1>
 
-<div class="top">
-  <a href="/board/write" class="btn">글 작성</a>
+<div th:if="${session.loginMember == null}">
+  <a th:href="@{/member/login}" class="btn">로그인</a>
 </div>
 
+<div th:if="${session.loginMember != null}">
+  환영합니다,
+  <span th:text="${session.loginMember.username}"></span>님
+
+  <form th:action="@{/member/logout}" method="post">
+    <button type="submit">로그아웃</button>
+  </form>
+
+  <a th:href="@{/board/write}" class="btn">글쓰기</a>
+</div>
 
 <table>
   <thead>
