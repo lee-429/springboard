@@ -1,10 +1,13 @@
 package com.hyunhak.springboard.service;
 
+import com.hyunhak.springboard.domain.Member;
 import com.hyunhak.springboard.dto.BoardCreateDto;
 import com.hyunhak.springboard.dto.BoardResponseDto;
 import com.hyunhak.springboard.dto.BoardUpdateDto;
 import com.hyunhak.springboard.entity.BoardEntity;
+import com.hyunhak.springboard.entity.MemberEntity;
 import com.hyunhak.springboard.repository.BoardRepository;
+import jakarta.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +26,7 @@ public class BoardService {
     }
 
     // 게시글 저장
-    public BoardEntity save(BoardCreateDto dto) {
+    public BoardEntity save(BoardCreateDto dto, MemberEntity loginMember) {
 
         // DTO를 BoardEntity 객체로 변환
         BoardEntity board = new BoardEntity();
@@ -31,7 +34,13 @@ public class BoardService {
         // DTO의 데이터를 BoardEntity에 복사
         board.setTitle(dto.getTitle());
         board.setContent(dto.getContent());
-        board.setWriter(dto.getWriter());
+
+        if (loginMember == null) {
+            throw new RuntimeException("로그인이 필요합니다.");
+        }
+
+        // 로그인한 회원의 username을 작성자로 저장
+        board.setWriter(loginMember.getUsername());
 
         // Repository에 저장
         return boardRepository.save(board);
@@ -83,7 +92,7 @@ public class BoardService {
     }
 
     // 게시글 수정
-    public BoardEntity update(Long id, BoardUpdateDto dto) {
+    public BoardEntity update(Long id, BoardUpdateDto dto, MemberEntity loginMember) {
 
         // id로 기존 게시글 조회 (없으면 예외 발생)
         Optional<BoardEntity> board = boardRepository.findById(id);
@@ -91,9 +100,16 @@ public class BoardService {
         // Optional에서 실제 엔티티 꺼내기 (없으면 "게시글 없음" 예외 발생)
         BoardEntity entity = board.orElseThrow(() -> new RuntimeException("게시글 없음"));
 
+        if (loginMember == null) {
+            throw new RuntimeException("로그인 돼 있지 않습니다.");
+        }
+
+        if (!loginMember.getUsername().equals(entity.getWriter())) {
+            throw new RuntimeException("작성자만 수정 할 수 있습니다.");
+        }
+
         // DTO 값을 기존 엔티티에 덮어쓰기 (수정)
         entity.setTitle(dto.getTitle());
-        entity.setWriter(dto.getWriter());
         entity.setContent(dto.getContent());
 
         // 변경된 엔티티 저장 (JPA에서는 save가 update 역할도 함)
@@ -101,7 +117,20 @@ public class BoardService {
     }
 
     // 게시글 삭제
-    public void delete(Long id) {
+    public void delete(Long id, MemberEntity loginMember) {
+
+        Optional<BoardEntity> board = boardRepository.findById(id);
+
+        BoardEntity entity = board.orElseThrow(() -> new RuntimeException("게시글 없음"));
+
+        if (loginMember == null) {
+            throw new RuntimeException("로그인 돼 있지 않습니다.");
+        }
+
+        if (!loginMember.getUsername().equals(entity.getWriter())) {
+            throw new RuntimeException("작성자만 삭제 할 수 있습니다.");
+        }
+
         boardRepository.deleteById(id);
     }
 

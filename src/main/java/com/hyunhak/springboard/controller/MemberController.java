@@ -84,7 +84,7 @@ public class MemberController {
         HttpSession session = request.getSession();
         session.setAttribute("loginMember", loginMember);
 
-        return "board/list";
+        return "redirect:/board";
     }
 
     // 로그아웃

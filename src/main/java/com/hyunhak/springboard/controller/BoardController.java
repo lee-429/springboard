@@ -3,7 +3,9 @@ package com.hyunhak.springboard.controller;
 import com.hyunhak.springboard.dto.BoardCreateDto;
 import com.hyunhak.springboard.dto.BoardResponseDto;
 import com.hyunhak.springboard.dto.BoardUpdateDto;
+import com.hyunhak.springboard.entity.MemberEntity;
 import com.hyunhak.springboard.service.BoardService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,15 +54,17 @@ public class BoardController {
 
     // 게시글 저장
     @PostMapping("/board")
-    public String save(@Valid BoardCreateDto dto, BindingResult bindingResult) {
+    public String save(@Valid BoardCreateDto dto, BindingResult bindingResult, HttpSession session) {
 
         // 검증 실패 시 작성 페이지 반환
         if (bindingResult.hasErrors()) {
             return "board/write";
         }
 
+        MemberEntity loginMember = (MemberEntity) session.getAttribute("loginMember");
+
         // 검증 성공 시 게시글 저장
-        boardService.save(dto);
+        boardService.save(dto, loginMember);
 
         return "redirect:/board";
     }
@@ -88,24 +92,32 @@ public class BoardController {
 
     // 게시글 수정
     @PostMapping("/board/update/{id}")
-    public String update(@PathVariable Long id, @Valid BoardUpdateDto dto, BindingResult bindingResult) {
+    public String update(@PathVariable Long id,
+                         @Valid BoardUpdateDto dto,
+                         BindingResult bindingResult,
+                         HttpSession session) {
 
         // 검증 실패 시 수정 페이지 반환
         if (bindingResult.hasErrors()) {
             return "board/edit";
         }
 
+        // 로그인 회원 조회
+        MemberEntity loginMember = (MemberEntity) session.getAttribute("loginMember");
+
         // 검증 성공 시 게시글 수정
-        boardService.update(id, dto);
+        boardService.update(id, dto, loginMember);
 
         return "redirect:/board";
     }
 
     // 게시글 삭제
     @PostMapping("/board/delete/{id}")
-    public String delete(@PathVariable Long id) {
+    public String delete(@PathVariable Long id, HttpSession session) {
 
-        boardService.delete(id);
+        MemberEntity loginMember = (MemberEntity) session.getAttribute("loginMember");
+
+        boardService.delete(id, loginMember);
 
         return "redirect:/board";
     }

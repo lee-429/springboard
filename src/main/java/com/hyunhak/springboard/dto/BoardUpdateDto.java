@@ -19,9 +19,4 @@ public class BoardUpdateDto {
     @NotBlank(message = "내용을 입력해주세요.")
     @Size(min=2, max=1000, message = "내용은 2~1000자 사이로 입력해주세요.")
     private String content;
-
-    @NotBlank(message = "작성자를 입력해주세요.")
-    @Size(min=2, max=10, message = "작성자는 2~10자 사이로 입력해주세요.")
-    private String writer;
-
 }
