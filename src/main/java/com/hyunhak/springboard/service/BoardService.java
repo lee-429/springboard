@@ -6,13 +6,15 @@ import com.hyunhak.springboard.dto.BoardUpdateDto;
 import com.hyunhak.springboard.entity.BoardEntity;
 import com.hyunhak.springboard.entity.MemberEntity;
 import com.hyunhak.springboard.repository.BoardRepository;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service // 비즈니스 로직 계층이라는 걸 Spring에 알려줌 (Service 역할)
 public class BoardService {
@@ -34,6 +36,13 @@ public class BoardService {
         // DTO의 데이터를 BoardEntity에 복사
         board.setTitle(dto.getTitle());
         board.setContent(dto.getContent());
+
+        if (!dto.getFile().isEmpty()) {
+            String storedFileName = saveFile(dto.getFile());
+
+            board.setStoredFileName(storedFileName);
+            board.setOriginalFileName(dto.getFile().getOriginalFilename());
+        }
 
         // 로그인 여부 확인
         if (loginMember == null) {
@@ -82,6 +91,8 @@ public class BoardService {
         dto.setTitle(entity.getTitle());
         dto.setContent(entity.getContent());
         dto.setWriter(entity.getWriter());
+        dto.setStoredFileName(entity.getStoredFileName());
+        dto.setOriginalFileName(entity.getOriginalFileName());
 
         return dto;
     }
@@ -109,6 +120,29 @@ public class BoardService {
         entity.setTitle(dto.getTitle());
         entity.setContent(dto.getContent());
 
+        // 파일 삭제 요청
+        if (dto.isDeleteFile()) {
+
+            deleteFile(entity.getStoredFileName());
+
+            entity.setStoredFileName(null);
+            entity.setOriginalFileName(null);
+        }
+
+        // 새로운 파일이 업로드된 경우
+        if (dto.getFile() != null && !dto.getFile().isEmpty()) {
+
+            // 새 파일로 교체하기 위해 기존 파일 삭제
+            deleteFile(entity.getStoredFileName());
+
+            // 새 파일 저장
+            String storedFileName = saveFile(dto.getFile());
+
+            // DB 파일 정보 변경
+            entity.setStoredFileName(storedFileName);
+            entity.setOriginalFileName(dto.getFile().getOriginalFilename());
+        }
+
         // 변경된 엔티티 저장 (JPA에서는 save가 update 역할도 함)
         return boardRepository.save(entity);
     }
@@ -131,6 +165,9 @@ public class BoardService {
         if (!loginMember.getUsername().equals(entity.getWriter())) {
             throw new RuntimeException("작성자만 삭제 할 수 있습니다.");
         }
+
+        // 첨부파일 삭제
+        deleteFile(entity.getStoredFileName());
 
         // 게시글 삭제
         boardRepository.delete(entity);
@@ -192,6 +229,68 @@ public class BoardService {
 
             return dto;
         });
+    }
+
+    // 파일 저장 (BoardService 내부에서만 사용하기에 private)
+    private String saveFile(MultipartFile file) {
+
+        // 업로드된 파일이 없으면 저장하지 않음
+        if (file.isEmpty()) {
+            return null;
+        }
+
+        // 사용자가 업로드한 원본 파일명
+        String originalFileName = file.getOriginalFilename();
+
+        // 파일명 중복 방지를 위한 UUID 생성
+        String uuid = UUID.randomUUID().toString();
+
+        // 서버 저장 파일명(UUID + 원본 파일명)
+        String storedFileName = uuid + "-" + originalFileName;
+
+        // 프로젝트 내부 uploads 폴더 경로 생성
+        String route = System.getProperty("user.dir") + "/uploads";
+
+        // uploads 폴더 객체 생성
+        File uploadDir = new File(route);
+
+        // uploads 폴더가 없으면 자동 생성
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
+
+        // 실제 저장될 파일 객체 생성
+        File saveFile = new File(route, storedFileName);
+
+        // 파일을 uploads 폴더에 저장
+        try {
+            file.transferTo(saveFile);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        // 저장된 파일명 반환
+        return storedFileName;
+    }
+
+    // 저장된 파일명을 받아 실제 uploads 폴더에 있는 파일을 삭제하는 메서드
+    private void deleteFile(String storedFileName) {
+
+        // 삭제할 파일명이 없으면 삭제할 파일이 없으므로 종료
+        if (storedFileName == null) {
+            return;
+        }
+
+        // 프로젝트 경로의 uploads 폴더 안에서 삭제할 파일 찾기
+        File file = new File(
+            System.getProperty("user.dir")
+                    + "/uploads/"
+                    + storedFileName);
+
+        // 해당 파일이 실제로 존재하면 삭제
+        if (file.exists()) {
+            file.delete();
+        }
     }
 
 }

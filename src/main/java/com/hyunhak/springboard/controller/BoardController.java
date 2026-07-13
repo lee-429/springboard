@@ -20,6 +20,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -143,7 +144,7 @@ public class BoardController {
     // 게시글 수정
     @PostMapping("/board/update/{id}")
     public String update(@PathVariable Long id,
-                         @Valid BoardUpdateDto dto,
+                         @Valid @ModelAttribute BoardUpdateDto dto,
                          BindingResult bindingResult,
                          HttpSession session) {
 
@@ -158,7 +159,7 @@ public class BoardController {
         // 검증 성공 시 게시글 수정
         boardService.update(id, dto, loginMember);
 
-        return "redirect:/board";
+        return "redirect:/board/" + id;
     }
 
     // 게시글 삭제

@@ -55,11 +55,14 @@
 
 <div class="form-box">
 
-  <form action="/board" method="post">
+  <!-- 파일 업로드를 위해 multipart/form-data 형식으로 전송 -->
+  <form action="/board" enctype="multipart/form-data" method="post">
 
     <input type="text" name="title" placeholder="제목">
 
     <textarea name="content" rows="5" placeholder="내용"></textarea>
+
+    <input type="file" name="file">
 
     <button type="submit">등록</button>
 

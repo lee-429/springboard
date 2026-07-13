@@ -32,4 +32,10 @@ public class BoardEntity {
                cascade = CascadeType.ALL,
                orphanRemoval = true)
     private List<CommentEntity> comments = new ArrayList<>();
+
+    // 서버 저장 파일명
+    private String storedFileName;
+
+    // 원본 파일명
+    private String originalFileName;
 }

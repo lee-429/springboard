@@ -8,7 +8,7 @@
 
 <h2>게시글 수정</h2>
 
-<form th:action="@{/board/update/{id}(id=${board.id})}" method="post">
+<form th:action="@{/board/update/{id}(id=${board.id})}" method="post" enctype="multipart/form-data">
 
   <table>
     <tr>
@@ -28,8 +28,35 @@
     <tr>
       <th>내용</th>
       <td>
-                <textarea name="content" rows="5" cols="30"
-                          th:text="${board.content}"></textarea>
+        <textarea name="content" rows="5" cols="30"
+                  th:text="${board.content}"></textarea>
+      </td>
+    </tr>
+
+    <tr>
+      <th>첨부파일</th>
+      <td>
+        <div th:if="${board.originalFileName != null}">
+          현재 파일 :
+          <span th:text="${board.originalFileName}"></span>
+
+          <br>
+
+          파일 변경 :
+          <input type="file" name="file">
+
+
+          <input type="checkbox" name="deleteFile">
+          파일 삭제
+        </div>
+
+        <div th:if="${board.originalFileName == null}">
+          첨부된 파일 없음
+
+          <br>
+
+          <input type="file" name="file">
+        </div>
       </td>
     </tr>
   </table>

@@ -77,6 +77,19 @@
     <span th:text="${board.writer}"></span>
   </div>
 
+  <div class="row">
+    <span class="label">첨부파일:</span>
+
+    <span th:if="${board.originalFileName == null}">
+      없음
+    </span>
+
+    <a th:if="${board.originalFileName != null}"
+       th:href="@{/uploads/{fileName}(fileName=${board.storedFileName})}"
+       th:text="${board.originalFileName}">
+    </a>
+  </div>
+
   <a th:href="@{/board/edit/{id}(id=${board.id})}" class="btn">수정</a>
   <form th:action="@{/board/delete/{id}(id=${board.id})}" method="post">
     <button type="submit" class="btn">삭제</button>
