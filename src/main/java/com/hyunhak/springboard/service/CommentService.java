@@ -5,6 +5,10 @@ import com.hyunhak.springboard.dto.CommentUpdateDto;
 import com.hyunhak.springboard.entity.BoardEntity;
 import com.hyunhak.springboard.entity.CommentEntity;
 import com.hyunhak.springboard.entity.MemberEntity;
+import com.hyunhak.springboard.exception.BoardNotFoundException;
+import com.hyunhak.springboard.exception.CommentNotFoundException;
+import com.hyunhak.springboard.exception.ForbiddenException;
+import com.hyunhak.springboard.exception.LoginRequiredException;
 import com.hyunhak.springboard.repository.BoardRepository;
 import com.hyunhak.springboard.repository.CommentRepository;
 import java.time.LocalDateTime;
@@ -27,12 +31,12 @@ public class CommentService {
 
         // 로그인하지 않은 사용자는 댓글 작성 불가
         if (loginMember == null) {
-            throw new RuntimeException("로그인이 필요합니다.");
+            throw new LoginRequiredException("로그인이 필요합니다.");
         }
 
         // 댓글이 작성될 게시글 조회 (없으면 예외 발생)
         BoardEntity board = boardRepository.findById(boardId)
-            .orElseThrow(() -> new RuntimeException("게시글 없음"));
+            .orElseThrow(() -> new BoardNotFoundException("게시글을 찾을 수 없습니다."));
 
         // 새로운 댓글 엔티티 생성
         CommentEntity comment = new CommentEntity();
@@ -57,16 +61,16 @@ public class CommentService {
 
         // 로그인하지 않은 사용자는 댓글 수정 불가
         if (loginMember == null) {
-            throw new RuntimeException("로그인이 필요합니다.");
+            throw new LoginRequiredException("로그인이 필요합니다.");
         }
 
         // 수정할 댓글 조회 (없으면 예외 발생)
         CommentEntity entity = commentRepository.findById(commentId)
-            .orElseThrow(() -> new RuntimeException("댓글 없음"));
+            .orElseThrow(() -> new CommentNotFoundException("댓글이 존재하지 않습니다."));
 
         // 댓글 작성자가 아니면 수정 불가
         if (!loginMember.getUsername().equals(entity.getWriter())) {
-            throw new RuntimeException("작성자만 수정 할 수 있습니다.");
+            throw new ForbiddenException("작성자만 수정할 수 있습니다.");
         }
 
         entity.setContent(dto.getContent());
@@ -80,16 +84,16 @@ public class CommentService {
 
         // 로그인하지 않은 사용자는 댓글 삭제 불가
         if (loginMember == null) {
-            throw new RuntimeException("로그인이 필요합니다.");
+            throw new LoginRequiredException("로그인이 필요합니다.");
         }
 
         // 삭제할 댓글 조회 (없으면 예외 발생)
         CommentEntity entity = commentRepository.findById(commentId)
-            .orElseThrow(() -> new RuntimeException("댓글 없음"));
+            .orElseThrow(() -> new CommentNotFoundException("댓글이 존재하지 않습니다."));
 
         // 댓글 작성자가 아니면 삭제 불가
         if (!loginMember.getUsername().equals(entity.getWriter())) {
-            throw new RuntimeException("작성자만 삭제 할 수 있습니다.");
+            throw new ForbiddenException("작성자만 삭제할 수 있습니다.");
         }
 
         commentRepository.delete(entity);

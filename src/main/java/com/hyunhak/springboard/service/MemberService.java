@@ -3,6 +3,10 @@ package com.hyunhak.springboard.service;
 import com.hyunhak.springboard.dto.LoginDto;
 import com.hyunhak.springboard.dto.MemberCreateDto;
 import com.hyunhak.springboard.entity.MemberEntity;
+import com.hyunhak.springboard.exception.DuplicateLoginIdException;
+import com.hyunhak.springboard.exception.DuplicateUsernameException;
+import com.hyunhak.springboard.exception.InvalidPasswordException;
+import com.hyunhak.springboard.exception.MemberNotFoundException;
 import com.hyunhak.springboard.repository.MemberRepository;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,12 +34,12 @@ public class MemberService {
 
         // 이미 존재하는 아이디면 회원가입 실패
         if (memberIdOpt.isPresent()) {
-            throw new RuntimeException("이미 존재하는 아이디입니다.");
+            throw new DuplicateLoginIdException("이미 존재하는 아이디입니다.");
         }
 
         // 이미 존재하는 닉네임이면 회원가입 실패
         if (memberUsernameOpt.isPresent()) {
-            throw new RuntimeException("이미 존재하는 닉네임입니다.");
+            throw new DuplicateUsernameException("이미 존재하는 닉네임입니다.");
         }
 
         // 회원가입 DTO를 MemberEntity 객체로 변환
@@ -57,7 +61,7 @@ public class MemberService {
         Optional<MemberEntity> memberOpt = memberRepository.findByLoginId(dto.getLoginId());
 
         // 회원이 없으면 예외 발생
-        MemberEntity member = memberOpt.orElseThrow(() -> new RuntimeException("아이디 없음"));
+        MemberEntity member = memberOpt.orElseThrow(() -> new MemberNotFoundException("아이디가 존재하지 않습니다."));
 
         // 입력한 비밀번호와 DB 비밀번호 비교
         if (member.getPassword().equals(dto.getPassword())) {
@@ -66,6 +70,6 @@ public class MemberService {
         }
 
         // 비밀번호 불일치
-        throw new RuntimeException("비밀번호가 일치하지 않습니다.");
+        throw new InvalidPasswordException("비밀번호가 일치하지 않습니다.");
     }
 }

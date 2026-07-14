@@ -5,9 +5,12 @@ import com.hyunhak.springboard.dto.BoardResponseDto;
 import com.hyunhak.springboard.dto.BoardUpdateDto;
 import com.hyunhak.springboard.entity.BoardEntity;
 import com.hyunhak.springboard.entity.MemberEntity;
+import com.hyunhak.springboard.exception.BoardNotFoundException;
+import com.hyunhak.springboard.exception.FileUploadException;
+import com.hyunhak.springboard.exception.ForbiddenException;
+import com.hyunhak.springboard.exception.LoginRequiredException;
 import com.hyunhak.springboard.repository.BoardRepository;
 import java.io.File;
-import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +49,7 @@ public class BoardService {
 
         // 로그인 여부 확인
         if (loginMember == null) {
-            throw new RuntimeException("로그인이 필요합니다.");
+            throw new LoginRequiredException("로그인이 필요합니다.");
         }
 
         // 로그인한 회원의 username을 작성자로 저장
@@ -82,7 +85,7 @@ public class BoardService {
         Optional<BoardEntity> board = boardRepository.findById(id);
 
         // Optional에서 BoardEntity 꺼내기
-        BoardEntity entity = board.orElseThrow(() -> new RuntimeException("게시글 없음"));
+        BoardEntity entity = board.orElseThrow(() -> new BoardNotFoundException("게시글을 찾을 수 없습니다."));
 
         // BoardEntity -> BoardResponseDto 변환
         BoardResponseDto dto = new BoardResponseDto();
@@ -104,16 +107,16 @@ public class BoardService {
         Optional<BoardEntity> board = boardRepository.findById(id);
 
         // Optional에서 실제 엔티티 꺼내기 (없으면 "게시글 없음" 예외 발생)
-        BoardEntity entity = board.orElseThrow(() -> new RuntimeException("게시글 없음"));
+        BoardEntity entity = board.orElseThrow(() -> new BoardNotFoundException("게시글을 찾을 수 없습니다."));
 
         // 로그인 여부 확인
         if (loginMember == null) {
-            throw new RuntimeException("로그인 돼 있지 않습니다.");
+            throw new LoginRequiredException("로그인이 필요합니다.");
         }
 
         // 작성자 본인인지 확인
         if (!loginMember.getUsername().equals(entity.getWriter())) {
-            throw new RuntimeException("작성자만 수정 할 수 있습니다.");
+            throw new ForbiddenException("작성자만 수정할 수 있습니다.");
         }
 
         // DTO 값을 기존 엔티티에 덮어쓰기 (수정)
@@ -154,16 +157,16 @@ public class BoardService {
         Optional<BoardEntity> board = boardRepository.findById(id);
 
         // Optional에서 실제 엔티티 꺼내기 (없으면 "게시글 없음" 예외 발생)
-        BoardEntity entity = board.orElseThrow(() -> new RuntimeException("게시글 없음"));
+        BoardEntity entity = board.orElseThrow(() -> new BoardNotFoundException("게시글을 찾을 수 없습니다."));
 
         // 로그인 여부 확인
         if (loginMember == null) {
-            throw new RuntimeException("로그인 돼 있지 않습니다.");
+            throw new LoginRequiredException("로그인이 필요합니다.");
         }
 
         // 작성자 본인인지 확인
         if (!loginMember.getUsername().equals(entity.getWriter())) {
-            throw new RuntimeException("작성자만 삭제 할 수 있습니다.");
+            throw new ForbiddenException("작성자만 삭제할 수 있습니다.");
         }
 
         // 첨부파일 삭제
@@ -266,7 +269,7 @@ public class BoardService {
         try {
             file.transferTo(saveFile);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new FileUploadException("파일 업로드에 실패했습니다.");
         }
 
         // 저장된 파일명 반환
