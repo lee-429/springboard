@@ -135,4 +135,16 @@ public class GlobalApiExceptionHandler {
                 message
             ));
     }
+
+    // 유효하지 않은 Refresh Token 처리
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidRefreshTokenException(InvalidRefreshTokenException e) {
+
+        return ResponseEntity
+            .status(HttpStatus.UNAUTHORIZED)
+            .body(new ApiErrorResponse(
+                401,
+                e.getMessage()
+            ));
+    }
 }

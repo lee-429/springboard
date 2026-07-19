@@ -8,7 +8,6 @@ import com.hyunhak.springboard.exception.DuplicateUsernameException;
 import com.hyunhak.springboard.repository.MemberRepository;
 import com.hyunhak.springboard.security.MemberPrincipal;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -16,6 +15,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service // 비즈니스 로직 계층이라는 걸 Spring에 알려줌 (Service 역할)
 public class MemberService {
@@ -77,21 +77,13 @@ public class MemberService {
                 dto.getPassword()
             );
 
-        // Spring Security 인증 수행
+        // AuthenticationManager를 통해 사용자 인증 수행
         Authentication authentication = authenticationManager.authenticate(token);
 
-        // 새로운 SecurityContext 생성
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-
-        // 인증 정보 저장
-        context.setAuthentication(authentication);
-
-        // SecurityContext 적용
-        SecurityContextHolder.setContext(context);
-
-        // 인증된 사용자 정보 반환
+        // 인증 성공 후 Principal에서 회원 정보 추출
         MemberPrincipal principal = (MemberPrincipal) authentication.getPrincipal();
-        
+
+        // 인증된 회원 정보 반환
         return principal.getMember();
     }
 }

@@ -60,6 +60,7 @@ public class SecurityConfig {
                     "/api/members",
                     "/api/members/login",
                     "/api/members/logout",
+                    "/api/members/reissue",
                     "/uploads/**")
                 .permitAll()
 

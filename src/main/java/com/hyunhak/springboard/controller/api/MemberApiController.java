@@ -3,16 +3,16 @@ package com.hyunhak.springboard.controller.api;
 import com.hyunhak.springboard.dto.member.LoginDto;
 import com.hyunhak.springboard.dto.member.MemberCreateDto;
 import com.hyunhak.springboard.dto.member.MemberResponseDto;
+import com.hyunhak.springboard.dto.member.RefreshTokenRequestDto;
 import com.hyunhak.springboard.dto.member.TokenResponseDto;
 import com.hyunhak.springboard.entity.MemberEntity;
+import com.hyunhak.springboard.repository.RefreshTokenRepository;
 import com.hyunhak.springboard.security.MemberPrincipal;
 import com.hyunhak.springboard.security.jwt.TokenProvider;
 import com.hyunhak.springboard.service.MemberService;
+import com.hyunhak.springboard.service.TokenService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,16 +25,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberApiController {
 
     private final MemberService memberService;
-    private final AuthenticationManager authenticationManager;
-    private final TokenProvider tokenProvider;
+    private final TokenService tokenService;
+
 
     public MemberApiController(
         MemberService memberService,
-        AuthenticationManager authenticationManager,
-        TokenProvider tokenProvider) {
+        TokenService tokenService
+    ) {
+
         this.memberService = memberService;
-        this.authenticationManager = authenticationManager;
-        this.tokenProvider = tokenProvider;
+        this.tokenService = tokenService;
     }
 
     // 회원가입
@@ -50,28 +50,22 @@ public class MemberApiController {
     @PostMapping("/login")
     public TokenResponseDto login(@RequestBody @Valid LoginDto dto) {
 
-        // 입력받은 로그인 정보로 Spring Security 인증 요청 생성
-        Authentication authentication =
-            authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    dto.getLoginId(),
-                    dto.getPassword()
-                )
-            );
+        // 로그인 인증 및 회원 조회
+        MemberEntity member = memberService.login(dto);
 
-        // 인증 성공 후 로그인 ID 추출
-        String loginId = authentication.getName();
-
-        // 로그인 ID를 기반으로 JWT Access Token 생성
-        String accessToken = tokenProvider.createAccessToken(loginId);
-
-        // 생성된 Access Token 반환
-        return new TokenResponseDto(accessToken);
+        // Access Token + Refresh Token 생성 및 저장
+        return tokenService.createToken(member);
     }
 
-    // 로그아웃
+    // 로그아웃 시 저장된 Refresh Token을 삭제하여 재발급 방지
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
+    public ResponseEntity<Void> logout(
+        @RequestBody RefreshTokenRequestDto dto) {
+
+        // 전달받은 Refresh Token 삭제 요청
+        tokenService.logout(dto.getRefreshToken());
+
+        // 로그아웃 처리 완료 응답
         return ResponseEntity.ok().build();
     }
 
@@ -87,5 +81,13 @@ public class MemberApiController {
         // 회원 정보를 DTO로 변환하여 반환
         return new MemberResponseDto(member);
 
+    }
+
+    // Access Token 재발급
+    @PostMapping("/reissue")
+    public TokenResponseDto reissue(@RequestBody RefreshTokenRequestDto dto) {
+
+        // Refresh Token 검증 후 Access Token 재발급
+        return tokenService.reissue(dto.getRefreshToken());
     }
 }
